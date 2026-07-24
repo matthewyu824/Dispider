@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dispider Studio</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <header class="topbar">
+    <a class="brand" href="#">
+      <span class="brand-mark"><img src="/logo.png" alt="Dispider"></span>
+      <span><strong>Dispider</strong><small>VIDEO INTELLIGENCE STUDIO</small></span>
+    </a>
+    <nav><button class="nav-link active" data-view="studio">推理工作台</button><button class="nav-link" data-view="evaluation">评测看板</button></nav>
+    <div class="system-pill"><span class="pulse"></span><span id="systemText">正在检测系统</span></div>
+  </header>
+
+  <main>
+    <section id="studioView" class="view active">
+      <div class="workspace-grid studio-workspace">
+        <section class="panel video-panel">
+          <div class="panel-head"><span>01</span><h2>视频输入</h2><div id="videoMeta" class="meta">未选择</div></div>
+          <div class="video-stage" id="dropZone">
+            <video id="videoPlayer" controls playsinline></video>
+            <div id="videoEmpty" class="empty-state"><div class="upload-glyph">↗</div><strong>拖入视频或选择示例</strong><span>MP4 · MOV · WEBM，自动兼容转码</span></div>
+            <input id="videoInput" type="file" accept="video/*" hidden>
+          </div>
+          <div class="sample-strip" id="sampleStrip"></div>
+        </section>
+
+        <section class="panel control-panel">
+          <div class="panel-head"><span>02</span><h2>交互设置</h2></div>
+          <form id="inferForm">
+            <label class="field-label" for="prompt">你想了解什么？</label>
+            <textarea id="prompt" name="prompt" rows="5" placeholder="例如：请描述视频中发生了什么。">Please describe what happens in this video.</textarea>
+            <div class="settings-row">
+              <label><span>计算设备</span><select id="gpu"><option value="0">GPU 0 · A10</option><option value="1">GPU 1 · A10</option></select></label>
+              <label><span>最大输出</span><select id="tokens"><option value="128">128 tokens</option><option value="256" selected>256 tokens</option><option value="512">512 tokens</option></select></label>
+            </div>
+            <label class="clip-setting"><span>视频采样</span><select id="clips"><option value="1" selected>1 clip · 16 帧（A10 推荐）</option><option value="2">2 clips · 32 帧</option></select></label>
+            <button id="runButton" class="run-button" type="submit"><span>开始推理</span><i>→</i></button>
+          </form>
+          <div class="stage-list" id="stageList">
+            <div data-stage="queued"><b></b><span>等待 GPU</span></div><div data-stage="preparing"><b></b><span>视频预处理</span></div><div data-stage="loading"><b></b><span>模型加载与生成</span></div><div data-stage="completed"><b></b><span>完成</span></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="result-panel panel" id="resultPanel">
+        <div class="panel-head"><span>03</span><h2>模型响应</h2><div id="runtime" class="meta">等待任务</div></div>
+        <div class="result-body"><div class="answer-mark">D</div><div><p id="answer" class="answer-placeholder">选择视频并开始推理，模型回答会出现在这里。</p><p id="errorText" class="error-text"></p></div></div>
+      </section>
+    </section>
+
+    <section id="evaluationView" class="view">
+      <div class="evaluation-hero"><div><p class="eyebrow">VIDEOMME · QUICK VALIDATION</p><h1>VideoMME 快速评测</h1></div><div class="scope-note">当前为 2 视频 / 16 帧缩小验证，不与论文完整集直接比较。</div></div>
+      <div class="metrics">
+        <article><span>子集准确率</span><strong id="metricAccuracy">—</strong><small>Quick subset</small></article>
+        <article><span>正确题数</span><strong id="metricCorrect">—</strong><small>Correct / total</small></article>
+        <article><span>有效回答率</span><strong id="metricAnswered">—</strong><small>Answer rate</small></article>
+        <article class="paper-card"><span>论文完整集</span><strong>57.2%</strong><small>VideoMME · no subtitles</small></article>
+      </div>
+      <div class="evaluation-context">
+        <div><span>评测配置</span><strong>VideoMME Quick · 无字幕 · 1 clip / 16 帧</strong></div>
+        <div id="taskBreakdown" class="task-breakdown"></div>
+      </div>
+      <section class="panel table-panel"><div class="panel-head"><span>04</span><h2>逐题结果</h2><div class="meta">点击题目展开全部选项与原始输出</div></div><div class="table-wrap"><table><thead><tr><th>视频 / 题目</th><th>任务类型</th><th>模型预测</th><th>标准答案</th><th>判定</th></tr></thead><tbody id="resultRows"></tbody></table></div></section>
+    </section>
+  </main>
+
+  <footer><span>CVPR 2025 · Dispider</span><span>Qwen2-7B · CLIP-L/14 · Dual NVIDIA A10</span></footer>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -3,7 +3,6 @@ import torch
 import os
 import json
 from tqdm import tqdm
-import shortuuid
 import sys
 # TODO
 # sys.path.append($$YOUR_MODEL_PATH)
@@ -21,8 +20,6 @@ from decord import VideoReader
 import numpy as np
 
 from transformers import StoppingCriteria, StoppingCriteriaList
-from petrel_client.client import Client
-client = Client('~/petreloss.conf')
 
 class StoppingCriteriaSub(StoppingCriteria):
     def __init__(self, stops=[], encounters=1):
@@ -168,9 +165,9 @@ def preprocess_question(questions, tokenizer):
     return seq
 
 
-def process_data(video_id, scene_sep, question, candidates, model_config, image_folder, tokenizer, processor, processor_large, time_tokenizer):
+def process_data(video_id, scene_sep, question, candidates, model_config, image_folder, tokenizer, processor, processor_large, time_tokenizer, max_clips=32):
     num_frames = 16
-    num_clips = 32
+    num_clips = max_clips
     system = 'Select the best answer to the following multiple-choice question based on the video. Respond with only the letter (A, B, C, or D) of the correct option.\n'
     if model_config.mm_use_im_start_end:
         qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + question
@@ -212,7 +209,6 @@ def eval_dataset(args):
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-    print(model)
     image_processor, time_tokenizer = image_processor
     image_processor_large = image_processor
     if time_tokenizer.pad_token is None:
@@ -233,11 +229,16 @@ def eval_dataset(args):
 
     with open(qa_json, 'r', encoding='utf-8') as f:
         data = json.load(f)
+    if args.video_ids:
+        selected_ids = {video_id.strip() for video_id in args.video_ids.split(',') if video_id.strip()}
+        data = [item for item in data if str(item.get('video_id')) in selected_ids]
     data = get_chunk(data, args.num_chunks, args.chunk_idx)
 
     eval_dict = []
     for video_item in tqdm(data):
         video_path = video_item['video_path']
+        if not os.path.isabs(video_path):
+            video_path = os.path.join(image_folder, video_path)
         questions = video_item['questions']
         scene_sep = video_item['scene_sep'] if 'scene_sep' in video_item else []
         try:
@@ -245,7 +246,7 @@ def eval_dataset(args):
                 question = item['question']
                 candidates = item['options']
                 #=================================You need to change this code =========================
-                input_ids, image_tensor, image_tensor_large, seqs, compress_mask, qs, qs_mask = process_data(video_path, scene_sep, question, candidates, model.config, image_folder, tokenizer, image_processor, image_processor_large, time_tokenizer)
+                input_ids, image_tensor, image_tensor_large, seqs, compress_mask, qs, qs_mask = process_data(video_path, scene_sep, question, candidates, model.config, image_folder, tokenizer, image_processor, image_processor_large, time_tokenizer, args.max_clips)
                 input_ids = input_ids.unsqueeze(0).to(device='cuda', non_blocking=True)
 
                 with torch.inference_mode():
@@ -274,8 +275,8 @@ def eval_dataset(args):
                 item['response'] = outputs
                 #=======================================================================================
                 # print(f'q_id:{q_id}, output:{outputs}!\n')
-        except:
-            print('Fail processing video %s' % video_path)
+        except Exception as exc:
+            print('Fail processing video %s: %s' % (video_path, exc))
             pass
         eval_dict.append(video_item)
 
@@ -300,6 +301,8 @@ if __name__ == "__main__":
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
     parser.add_argument("--max_new_tokens", type=int, default=256)
+    parser.add_argument("--max-clips", type=int, default=32)
+    parser.add_argument("--video-ids", type=str, default="", help="Optional comma-separated video IDs to evaluate.")
     parser.add_argument("--dataset_name", type=str, default=None, help="The type of LLM")
     parser.add_argument("--Eval_QA_root", type=str, default='./', help="folder containing QA JSON files")
     parser.add_argument("--Eval_Video_root", type=str, default='./', help="folder containing video data")

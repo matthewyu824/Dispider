@@ -1,0 +1,12 @@
+.venv/
+checkpoints/
+tmp/
+
+__pycache__/
+*.py[cod]
+
+web_demo/uploads/
+web_demo/results/
+web_demo/logs/
+*.log
+*.pid

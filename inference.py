@@ -135,9 +135,9 @@ def preprocess_question(questions, tokenizer):
     return seq
 
 
-def process_data(video_id, scene_sep, question, model_config, tokenizer, processor, processor_large, time_tokenizer):
+def process_data(video_id, scene_sep, question, model_config, tokenizer, processor, processor_large, time_tokenizer, max_clips=100):
     num_frames = 16
-    num_clips = 100
+    num_clips = max_clips
     if model_config.mm_use_im_start_end:
         qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + question
     else:
@@ -199,7 +199,7 @@ class videoStream():
 
 
 
-    def Run(self, file, prompt):
+    def Run(self, file, prompt, max_new_tokens=1024, max_clips=100):
         """
         Given the video file and input prompt, run the model and return the response
         file: Video file path
@@ -213,6 +213,7 @@ class videoStream():
                                 self.image_processor, 
                                 self.image_processor_large, 
                                 self.time_tokenizer,
+                                max_clips,
                                 )
         input_ids = input_ids.unsqueeze(0).to(device='cuda', non_blocking=True)
         with torch.inference_mode():
@@ -230,7 +231,7 @@ class videoStream():
                 insert_position=0,
                 ans_position=[],
                 do_sample=False,
-                max_new_tokens=1024,
+                max_new_tokens=max_new_tokens,
                 pad_token_id=self.tokenizer.eos_token_id,
                 stopping_criteria=self.stopping_criteria,
                 use_cache=True)
@@ -246,13 +247,14 @@ def main():
     parser.add_argument('--model_path', type=str, required=True, help='Path to the model repository.')
     parser.add_argument('--video_path', type=str, required=True, help='Path to the video file.')
     parser.add_argument('--prompt', type=str, required=True, help='Input prompt for the model.')
+    parser.add_argument('--max_new_tokens', type=int, default=256, help='Maximum number of generated tokens.')
+    parser.add_argument('--max_clips', type=int, default=100, help='Maximum number of 16-frame video clips.')
     args = parser.parse_args()
 
 
     streamer = videoStream(args.model_path)
-    output = streamer.Run(args.video_path, args.prompt)
+    output = streamer.Run(args.video_path, args.prompt, args.max_new_tokens, args.max_clips)
     print(output)
 
 if __name__ == "__main__":
     main()
-

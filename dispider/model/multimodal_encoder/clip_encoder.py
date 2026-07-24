@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 
@@ -17,7 +18,14 @@ class CLIPVisionTower(nn.Module):
         else:
             self.select_layer = args.mm_vision_select_layer
             self.select_feature = getattr(args, 'mm_vision_select_feature', 'patch')
-        self.proxies = {'http': 'http://qianrui:8Op7zaetbJK2wYtSRnTVFP5h3iC8rGdQtQTDl7VfPcyOXRXLZKXnyY7GUgww@10.1.20.50:23128', 'https': 'http://qianrui:8Op7zaetbJK2wYtSRnTVFP5h3iC8rGdQtQTDl7VfPcyOXRXLZKXnyY7GUgww@10.1.20.50:23128'}
+        http_proxy = os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy")
+        https_proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+        self.proxies = None
+        if http_proxy or https_proxy:
+            self.proxies = {
+                "http": http_proxy,
+                "https": https_proxy or http_proxy,
+            }
 
         if not delay_load:
             self.load_model()

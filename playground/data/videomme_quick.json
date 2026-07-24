@@ -1,0 +1,26 @@
+[
+  {
+    "video_id": "093",
+    "domain": "Film & Television",
+    "sub_category": "Animation",
+    "duration": "short",
+    "video_path": "drbi6HK1gSc_h264.mp4",
+    "questions": [
+      {"question_id": "093-1", "task_type": "Action Reasoning", "question": "How does the girl feel in this video?", "options": ["A. Scared.", "B. Peaceful.", "C. Relaxed.", "D. Anxious."], "answer": "D"},
+      {"question_id": "093-2", "task_type": "Object Recognition", "question": "What might be the age of the girl in the video?", "options": ["A. 14.", "B. 16.", "C. 18.", "D. 12."], "answer": "B"},
+      {"question_id": "093-3", "task_type": "Action Reasoning", "question": "Which of the following does the girl desire?", "options": ["A. More people celebrate for her birthday.", "B. Slower passage of time.", "C. Faster passage of time.", "D. A close friend playing with her."], "answer": "C"}
+    ]
+  },
+  {
+    "video_id": "082",
+    "domain": "Knowledge",
+    "sub_category": "Technology",
+    "duration": "short",
+    "video_path": "m4qhFFdHTCc_h264.mp4",
+    "questions": [
+      {"question_id": "082-1", "task_type": "Attribute Perception", "question": "What's wrong with this car?", "options": ["A. It doesn't have a left rear wheel.", "B. It doesn't have a right front wheel.", "C. Its headlamp is broken.", "D. Its right door is broken."], "answer": "B"},
+      {"question_id": "082-2", "task_type": "Attribute Perception", "question": "Which colors are not present on the car, including the color of the lights, shown in the video?", "options": ["A. Black.", "B. Blue.", "C. Yellow.", "D. White."], "answer": "B"},
+      {"question_id": "082-3", "task_type": "Spatial Reasoning", "question": "In what location was the video most likely recorded?", "options": ["A. Indoor parking lot.", "B. Outdoor park circuit.", "C. Car assembly line.", "D. Mountain road."], "answer": "A"}
+    ]
+  }
+]
