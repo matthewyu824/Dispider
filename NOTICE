@@ -1,0 +1,18 @@
+Online Video LLM Testbed
+Copyright 2026 Online Video LLM Testbed contributors
+
+This product includes modified software from the Dispider project:
+https://github.com/Mark12Ding/Dispider
+
+Dispider is associated with the paper:
+"Dispider: Enabling Video LLMs with Active Real-Time Interaction via
+Disentangled Perception, Decision, and Reaction", Rui Qian et al., CVPR 2025.
+https://arxiv.org/abs/2501.03218
+
+The upstream source was distributed under the Apache License, Version 2.0.
+Files in this repository have been modified, including package naming,
+inference compatibility, evaluation tooling, and the online testbed.
+
+This project also builds on concepts and components from LLaVA, Qwen2, CLIP,
+Transformers, PyTorch, aiortc, FFmpeg, and their respective dependencies.
+Those projects and model weights remain subject to their own licenses.

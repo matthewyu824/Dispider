@@ -3,17 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Dispider Studio</title>
+  <title>Online Video LLM Testbed</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <div class="noise"></div>
   <header class="topbar">
     <a class="brand" href="#">
-      <span class="brand-mark"><img src="/logo.png" alt="Dispider"></span>
-      <span><strong>Dispider</strong><small>VIDEO INTELLIGENCE STUDIO</small></span>
+      <span class="brand-mark" aria-hidden="true">OV</span>
+      <span><strong>Online Video LLM</strong><small>RESEARCH TESTBED</small></span>
     </a>
-    <nav><button class="nav-link active" data-view="studio">推理工作台</button><button class="nav-link" data-view="evaluation">评测看板</button></nav>
+    <nav>
+      <button class="nav-link active" data-view="studio">离线推理</button>
+      <button class="nav-link" data-view="online">在线 Testbed</button>
+      <button class="nav-link" data-view="evaluation">评测看板</button>
+    </nav>
     <div class="system-pill"><span class="pulse"></span><span id="systemText">正在检测系统</span></div>
   </header>
 
@@ -36,7 +40,7 @@
             <label class="field-label" for="prompt">你想了解什么？</label>
             <textarea id="prompt" name="prompt" rows="5" placeholder="例如：请描述视频中发生了什么。">Please describe what happens in this video.</textarea>
             <div class="settings-row">
-              <label><span>计算设备</span><select id="gpu"><option value="0">GPU 0 · A10</option><option value="1">GPU 1 · A10</option></select></label>
+              <label><span>计算设备</span><select id="gpu"><option value="0">GPU 0 · A10</option><option value="1" selected>GPU 1 · A10</option></select></label>
               <label><span>最大输出</span><select id="tokens"><option value="128">128 tokens</option><option value="256" selected>256 tokens</option><option value="512">512 tokens</option></select></label>
             </div>
             <label class="clip-setting"><span>视频采样</span><select id="clips"><option value="1" selected>1 clip · 16 帧（A10 推荐）</option><option value="2">2 clips · 32 帧</option></select></label>
@@ -52,6 +56,159 @@
         <div class="panel-head"><span>03</span><h2>模型响应</h2><div id="runtime" class="meta">等待任务</div></div>
         <div class="result-body"><div class="answer-mark">D</div><div><p id="answer" class="answer-placeholder">选择视频并开始推理，模型回答会出现在这里。</p><p id="errorText" class="error-text"></p></div></div>
       </section>
+    </section>
+
+    <section id="onlineView" class="view">
+      <div class="online-intro">
+        <div>
+          <p class="eyebrow">WEBRTC · SLIDING WINDOW · LIVE METRICS</p>
+          <h1>Online Video LLM Testbed</h1>
+        </div>
+        <p>本地视频按真实播放时钟通过 WebRTC 发送。服务端只使用已经到达的帧，并按滑动时间窗触发模型推理。</p>
+      </div>
+
+      <div class="online-grid">
+        <section class="panel online-source-panel">
+          <div class="panel-head"><span>01</span><h2>流式视频源</h2><div id="onlineSourceMeta" class="meta">未选择</div></div>
+          <div class="video-stage online-video-stage" id="onlineDropZone">
+            <video id="onlineVideoPlayer" controls playsinline muted></video>
+            <div id="onlineVideoEmpty" class="empty-state">
+              <div class="upload-glyph">↗</div>
+              <strong>选择本地视频</strong>
+              <span>无需摄像头 · 视频按播放速度发送</span>
+            </div>
+            <input id="onlineVideoInput" type="file" accept="video/*" hidden>
+          </div>
+          <div class="online-source-actions">
+            <button id="onlineUploadButton" class="secondary-button" type="button">选择本地视频</button>
+            <label><span>或使用示例</span><select id="onlineSample"></select></label>
+          </div>
+        </section>
+
+        <section class="panel online-control-panel">
+          <div class="panel-head"><span>02</span><h2>在线策略</h2><div id="onlineState" class="state-badge idle">未启动</div></div>
+          <form id="onlineForm">
+            <label class="field-label" for="onlinePrompt">持续观察目标</label>
+            <textarea id="onlinePrompt" rows="4">Describe important events observed so far. Do not predict future events.</textarea>
+            <div class="settings-row">
+              <label><span>计算设备</span><select id="onlineGpu"><option value="0">GPU 0 · A10</option><option value="1" selected>GPU 1 · A10</option></select></label>
+              <label><span>最大输出</span><select id="onlineTokens"><option value="64">64 tokens</option><option value="128" selected>128 tokens</option><option value="256">256 tokens</option></select></label>
+            </div>
+            <div class="settings-row">
+              <label><span>滑动窗口</span><select id="onlineWindow"><option value="6">最近 6 秒</option><option value="8" selected>最近 8 秒</option><option value="12">最近 12 秒</option><option value="16">最近 16 秒</option></select></label>
+              <label><span>触发间隔</span><select id="onlineInterval"><option value="4">每 4 秒</option><option value="8" selected>每 8 秒</option><option value="12">每 12 秒</option><option value="16">每 16 秒</option></select></label>
+            </div>
+            <fieldset class="encoding-settings">
+              <legend>网络编码设置</legend>
+              <div class="encoding-fields">
+                <label>
+                  <span>码率上限</span>
+                  <select id="encodingBitrate">
+                    <option value="0">自动</option>
+                    <option value="250">250 Kbps</option>
+                    <option value="500">500 Kbps</option>
+                    <option value="1000">1 Mbps</option>
+                    <option value="2000" selected>2 Mbps</option>
+                    <option value="4000">4 Mbps</option>
+                    <option value="8000">8 Mbps</option>
+                  </select>
+                </label>
+                <label>
+                  <span>最大帧率</span>
+                  <select id="encodingFramerate">
+                    <option value="0">跟随源视频</option>
+                    <option value="10">10 FPS</option>
+                    <option value="15">15 FPS</option>
+                    <option value="24">24 FPS</option>
+                    <option value="30" selected>30 FPS</option>
+                  </select>
+                </label>
+                <label>
+                  <span>分辨率缩放</span>
+                  <select id="encodingScale">
+                    <option value="1" selected>原始分辨率</option>
+                    <option value="1.5">缩放至 67%</option>
+                    <option value="2">缩放至 50%</option>
+                    <option value="3">缩放至 33%</option>
+                    <option value="4">缩放至 25%</option>
+                  </select>
+                </label>
+              </div>
+              <div class="encoding-actions">
+                <div>
+                  <strong id="encodingStatus">将在会话启动时应用</strong>
+                  <span id="encodingActual">实际编码：等待 WebRTC 统计</span>
+                </div>
+                <button id="applyEncodingButton" class="secondary-button" type="button">应用到传输</button>
+              </div>
+            </fieldset>
+            <label class="auto-query"><input id="onlineAutoQuery" type="checkbox" checked><span>按间隔自动触发推理</span></label>
+            <div class="online-buttons">
+              <button id="onlineStartButton" class="run-button" type="submit"><span>启动在线会话</span><i>→</i></button>
+              <button id="onlineStopButton" class="secondary-button" type="button" disabled>停止</button>
+            </div>
+          </form>
+          <p id="onlineError" class="error-text online-error"></p>
+        </section>
+      </div>
+
+      <section class="panel receiver-panel">
+        <div class="panel-head">
+          <span>03</span>
+          <h2>服务端接收结果</h2>
+          <div id="receiverMeta" class="meta">等待首帧</div>
+        </div>
+        <div class="receiver-content">
+          <div id="receiverStage" class="receiver-stage">
+            <img id="receiverPreview" alt="服务端收到的最新视频帧">
+            <div id="receiverEmpty" class="receiver-empty">
+              <strong>尚未收到视频帧</strong>
+              <span>启动在线会话并播放视频后，这里会显示服务端实际解码到的画面。</span>
+            </div>
+            <span class="receiver-badge"><i></i> SERVER RX</span>
+          </div>
+          <div class="receiver-summary">
+            <h3>这是模型真正看到的视频输入</h3>
+            <p>预览来自服务端已接收并采样的最新帧，不是发送端播放器的镜像。画面持续更新即可证明 WebRTC 视频已经到达服务端。</p>
+            <dl>
+              <div><dt>接收帧</dt><dd id="receiverFrames">0</dd></div>
+              <div><dt>采样帧</dt><dd id="receiverSampled">0</dd></div>
+              <div><dt>媒体时间</dt><dd id="receiverTime">0.0s</dd></div>
+              <div><dt>传输延迟</dt><dd id="receiverLag">—</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="online-metrics" aria-label="在线指标">
+        <article><span>传输状态</span><strong id="transportMetric">—</strong><small>WebRTC state</small></article>
+        <article><span>视频时钟</span><strong id="playheadMetric">0.0s</strong><small>Observed media time</small></article>
+        <article><span>缓冲窗口</span><strong id="bufferMetric">0.0s</strong><small>Server-side buffer</small></article>
+        <article><span>发送码率</span><strong id="bitrateMetric">0</strong><small>Kbps</small></article>
+        <article><span>模型延迟</span><strong id="latencyMetric">—</strong><small>Last inference</small></article>
+        <article><span>回答次数</span><strong id="responseMetric">0</strong><small>Completed reactions</small></article>
+      </section>
+
+      <div class="online-observation-grid">
+        <section class="panel">
+          <div class="panel-head"><span>04</span><h2>在线回答</h2><button id="manualQueryButton" class="inline-button" type="button" disabled>立即提问</button></div>
+          <div class="online-question"><span>当前问题</span><strong id="currentOnlineQuestion">—</strong></div>
+          <div id="onlineAnswers" class="online-answers">
+            <p class="empty-copy">会话启动后，模型回答会按视频时间排列在这里。</p>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><span>05</span><h2>事件时间线</h2><div class="meta">服务端事件</div></div>
+          <ol id="onlineTimeline" class="online-timeline">
+            <li><time>—</time><span>等待在线会话</span></li>
+          </ol>
+        </section>
+      </div>
+
+      <div class="implementation-note">
+        <strong>当前实现边界</strong>
+        <span>WebRTC 传输是真实的；模型采用到达帧的滑动窗口重复推理。它是可测量的在线基线，还没有复用论文中感知/决策/反应模块的跨窗口隐藏状态。</span>
+      </div>
     </section>
 
     <section id="evaluationView" class="view">
@@ -70,7 +227,7 @@
     </section>
   </main>
 
-  <footer><span>CVPR 2025 · Dispider</span><span>Qwen2-7B · CLIP-L/14 · Dual NVIDIA A10</span></footer>
+  <footer><span>ONLINE VIDEO LLM · RESEARCH TESTBED</span><span>Qwen2-7B · CLIP-L/14 · Dual NVIDIA A10</span></footer>
   <script src="/app.js"></script>
 </body>
 </html>

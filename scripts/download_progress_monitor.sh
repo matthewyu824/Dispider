@@ -2,8 +2,9 @@
 
 set -u
 
-ROOT="/home/yuhebin/Dispider"
-CACHE_DIR="$ROOT/checkpoints/Dispider/.cache/huggingface/download"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODEL_DIR="${ONLINE_VIDEO_LLM_MODEL_PATH:-$ROOT/checkpoints/model}"
+CACHE_DIR="$MODEL_DIR/.cache/huggingface/download"
 LOG_FILE="$ROOT/checkpoints/download_progress.log"
 PID_FILE="$ROOT/checkpoints/download_progress.pid"
 FILE2="$CACHE_DIR/t9msAuTjAZjuQnmzGOwTjiptvIU=.3242c9a0b6bf3dd33f134682ca8d39e726b4329c67fe2b823f213de5ba691cb7.incomplete"

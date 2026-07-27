@@ -1,131 +1,103 @@
-# <img src="img/logo.png" style="vertical-align: -10px;" :height="40px" width="40px"> Dispider
-This repository is the official implementation of Dispider （CVPR 2025）.
+# Online Video LLM Testbed
 
+面向在线长视频理解研究的可运行 Testbed。系统既支持本地视频离线问答，也支持把本地视频按真实播放时钟通过 WebRTC 发送到服务端，在仅使用已经到达帧的前提下进行滑动窗口推理。
 
-<img align="center" src="img/pipeline.png" style="  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;" />
+## 能力
 
-<p align="center" style="font-size: em; margin-top: 0.5em">
+- 本地视频离线问答，支持 GPU、采样帧数和最大输出长度配置
+- WebRTC 在线视频传输，无需开启摄像头
+- 基于媒体时间的滑动窗口与定时/手动触发
+- 持久化单 GPU 模型 Worker，避免每次请求重复加载权重
+- 传输状态、缓冲窗口、码率、推理延迟和回答时间线
+- 服务端接收画面预览，可直接核对 WebRTC 实际传输结果
+- WebRTC 编码面板，可在线调整码率上限、最大帧率和分辨率缩放
+- VideoMME 小规模快速评测与逐题可追溯结果
+- Mock 模式，可在不加载模型的情况下验证传输与界面
 
-[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)<br>
-<a href="http://arxiv.org/abs/2501.03218"><img src="https://img.shields.io/badge/arXiv-paper-<color>"></a>
-<a href="assets/paper.pdf"><img src="https://img.shields.io/badge/PDF-red"></a>
-<a href="https://huggingface.co/Mar2Ding/Dispider"><img src="https://img.shields.io/badge/🤗HuggingFace-yellow"></a>
-<!-- <a href="https://mark12ding.github.io/project/SAM2Long/"><img src="https://img.shields.io/badge/Project-Homepage-green"></a> -->
-</p>
+## 系统结构
 
-
-
-
-
-
->[**Dispider: Enabling Video LLMs with Active Real-Time Interaction via Disentangled Perception, Decision, and Reaction**](http://arxiv.org/abs/2501.03218)<br>
-> [Rui Qian](https://shvdiwnkozbw.github.io/), [Shuangrui Ding](https://mark12ding.github.io/), [Xiaoyi Dong](https://lightdxy.github.io/), [Pan Zhang](https://panzhang0212.github.io/)<br>
-[Yuhang Zang](https://yuhangzang.github.io/), [Yuhang Cao](https://scholar.google.com/citations?user=sJkqsqkAAAAJ), [Dahua Lin](http://dahua.site/), [Jiaqi Wang](https://myownskyw7.github.io/)<br>
-CUHK, Shanghai AI Lab
-
-
-## 📰 News
-- [2025/3/11] 🔥🔥🔥We released the checkpoints of Dispider at [Huggingface🤗](https://huggingface.co/Mar2Ding/Dispider)
-- [2025/2/27] 🔥🔥🔥Dispider is accepted at CVPR 2025! Cheers🍻🍻🍻
-- [2025/1/6] 🔥🔥🔥 We released the paper on [arXiv](http://arxiv.org/abs/2501.03218)!
-
-## 🧾 ToDo Lists
-- [x] Release Inference Code
-- [x] Release Checkpoints
-- [ ] Release Training Code
-- [ ] Release Demo Video
-
-
-## 💡 Highlights
-### 🔥 A New Paradigm for Online Video LLMs with Active Real-Time Interaction
-Dispider enables real-time interactions with streaming videos, unlike traditional offline video LLMs that process the entire video before responding. It provides continuous, timely feedback in live scenarios.
-
-### ⚡️ Disentangled Perception, Decision, and Reaction Modules Operating Asynchronously
-Dispider separates perception, decision-making, and reaction into asynchronous modules that operate in parallel. This ensures continuous video processing and response generation without blocking, enabling timely interactions.
-
-
-### 🤯 Superior Performance on StreamingBench and Conventional Video Benchmarks
-Dispider outperforms VideoLLM-online on StreamingBench and surpasses offline Video LLMs on benchmarks like EgoSchema, VideoMME, MLVU, and ETBench. It excels in temporal reasoning and handles diverse video lengths effectively.
-
-## 🛠️ Installation
-Follow the steps below to set up the Dispider environment. We recommend using the specified versions of each library to ensure reproduce optimal performance.
-
-### 1. **Create and Activate a Conda Environment**
-
-First, create a new Conda environment with Python 3.10 and activate it:
-
-```bash
-conda create -n dispider python=3.10 -y
-conda activate dispider
+```text
+浏览器本地视频
+  -> HTML 视频时钟
+  -> WebRTC 视频轨
+  -> 服务端帧采样与滑动窗口
+  -> Online Video LLM Worker
+  -> 时间戳回答、延迟指标与评测记录
 ```
 
-### 2. Upgrade pip
+当前实现是可测量的在线推理基线：每次触发都会对最新观测窗口执行一次推理，暂未跨窗口复用感知、决策和反应模块的隐藏状态。
 
-Ensure that `pip` is up to date to avoid any installation issues:
+## 环境
+
+- Python 3.10
+- CUDA 11.8
+- PyTorch 2.2
+- Transformers 4.41
+- FFmpeg
+- 两块 GPU 可并行承载独立会话；单次模型推理由一块 GPU 完成
+
+安装在线传输依赖：
 
 ```bash
-pip install --upgrade pip
+.venv/bin/pip install -r web_demo/requirements-online.txt
 ```
 
+## 启动
 
-### 3. Install Required Libraries
-Ensure that CUDA 11.8 is installed on your system. You can download it from the [official NVIDIA website](https://developer.nvidia.com/cuda-11-8-0-download-archive). Follow the installation instructions provided there.
+真实模型：
 
 ```bash
-pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0
-
-pip install flash-attn==2.5.9.post1 transformers==4.41.2 deepspeed==0.9.5 accelerate==0.27.2 pydantic==1.10.13 timm==0.6.13 decord
+scripts/run_online_testbed.sh
 ```
 
-## Quick Start
-First download the checkpoints at the folder. 
+只验证 WebRTC 和界面：
 
-To perform single-turn inference, execute the following script:
 ```bash
-python inference.py --model_path YOUR_MODEL_PATH --video_path YOUR_VIDEO_PATH --prompt YOUR_PROMPT
+scripts/run_online_testbed.sh --mock-model
 ```
-By default, the prompt is inserted at the beginning of the streaming video. The expected response will be generated in a single turn.
 
-## Example Evaluation of VideoMME
-Update the `video_path` in `data/videomme_template.json` and adjust the corresponding argument in `videomme.sh`. Then execute the following command, which will utilize 8 GPUs to run the inference in parallel:
+默认地址为 `http://localhost:7860`。可通过以下变量覆盖：
+
+```bash
+ONLINE_VIDEO_LLM_HOST=0.0.0.0 ONLINE_VIDEO_LLM_PORT=7860 \
+  scripts/run_online_testbed.sh
+```
+
+模型路径可通过 `ONLINE_VIDEO_LLM_MODEL_PATH` 指定。未指定时，服务会在 `checkpoints/` 下自动寻找兼容的长视频模型。
+
+## 命令行推理
+
+```bash
+python inference.py \
+  --model_path /path/to/model \
+  --video_path /path/to/video.mp4 \
+  --prompt "Please describe what happens in this video."
+```
+
+## VideoMME 快速评测
+
+快速评测数据模板位于 `playground/data/`。配置视频路径和模型路径后执行：
+
 ```bash
 bash scripts/eval/videomme.sh
 ```
 
+网页评测看板会展示准确率、有效回答率、任务类型、每道题的全部选项、模型原始输出、预测答案和标准答案。
 
-## ☎️ Contact
-Shuangrui Ding: mark12ding@gmail.com
+## 目录
 
-
-## 🔒 License
-The majority of this project is released under the CC-BY-NC 4.0 license as found in the LICENSE file. 
-
-
-## 👍 Acknowledgements
-This codebase is built upon [LLaVA](https://github.com/haotian-liu/LLaVA) and leverages several open-source libraries. We extend our gratitude to the contributors and maintainers of these projects.
-
-
-## ✒️ Citation
-If you find our work helpful for your research, please consider giving a star ⭐ and citation 📝.
-```bibtex
-@article{qian2025dispider,
-        title={Dispider: Enabling Video LLMs with Active Real-Time Interaction via Disentangled Perception, Decision, and Reaction},
-        author={Qian, Rui and Ding, Shuangrui and Dong, Xiaoyi and Zhang, Pan and Zang, Yuhang and Cao, Yuhang and Lin, Dahua and Wang, Jiaqi},
-        journal={arXiv preprint arXiv:2501.03218},
-        year={2025}
-      }
-
-@article{qian2025streaming,
-  title={Streaming long video understanding with large language models},
-  author={Qian, Rui and Dong, Xiaoyi and Zhang, Pan and Zang, Yuhang and Ding, Shuangrui and Lin, Dahua and Wang, Jiaqi},
-  journal={Advances in Neural Information Processing Systems},
-  volume={37},
-  pages={119336--119360},
-  year={2025}
-}
+```text
+online_video_llm/   模型架构、视频预处理与评测代码
+web_demo/           WebRTC 服务、模型 Worker 与前端
+scripts/            启动、下载和评测脚本
+playground/data/    快速评测配置
+inference.py        单视频命令行推理入口
 ```
 
+更完整的在线协议和实现边界见 [`web_demo/ONLINE_TESTBED.md`](web_demo/ONLINE_TESTBED.md)。
 
+## 许可证与上游
+
+本仓库基于 Apache License 2.0 发布。模型权重和数据集可能适用各自的许可证，使用前请分别确认。
+
+本项目包含在开源视频语言模型实现基础上的修改，并新增了 WebRTC 传输、滑动窗口调度、持久化 Worker、可观测指标、评测看板和工程化运行入口。上游来源、论文引用和修改声明见 [`NOTICE`](NOTICE)。

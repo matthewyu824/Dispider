@@ -1,14 +1,15 @@
+# Modified for Online Video LLM Testbed; see NOTICE for upstream attribution.
 import os
 import transformers
 import torch
 import sys
 import argparse
 
-from dispider.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_ANS_TOKEN, DEFAULT_TODO_TOKEN
-from dispider.conversation import conv_templates, SeparatorStyle
-from dispider.model.builder import load_pretrained_model
-from dispider.utils import disable_torch_init
-from dispider.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
+from online_video_llm.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_ANS_TOKEN, DEFAULT_TODO_TOKEN
+from online_video_llm.conversation import conv_templates, SeparatorStyle
+from online_video_llm.model.builder import load_pretrained_model
+from online_video_llm.utils import disable_torch_init
+from online_video_llm.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 import pdb
 from PIL import Image
 import math
@@ -199,7 +200,7 @@ class videoStream():
 
 
 
-    def Run(self, file, prompt, max_new_tokens=1024, max_clips=100):
+    def Run(self, file, prompt, max_new_tokens=1024, max_clips=100, min_new_tokens=0):
         """
         Given the video file and input prompt, run the model and return the response
         file: Video file path
@@ -231,6 +232,7 @@ class videoStream():
                 insert_position=0,
                 ans_position=[],
                 do_sample=False,
+                min_new_tokens=min_new_tokens,
                 max_new_tokens=max_new_tokens,
                 pad_token_id=self.tokenizer.eos_token_id,
                 stopping_criteria=self.stopping_criteria,
@@ -248,12 +250,13 @@ def main():
     parser.add_argument('--video_path', type=str, required=True, help='Path to the video file.')
     parser.add_argument('--prompt', type=str, required=True, help='Input prompt for the model.')
     parser.add_argument('--max_new_tokens', type=int, default=256, help='Maximum number of generated tokens.')
+    parser.add_argument('--min_new_tokens', type=int, default=0, help='Minimum number of generated tokens before EOS is allowed.')
     parser.add_argument('--max_clips', type=int, default=100, help='Maximum number of 16-frame video clips.')
     args = parser.parse_args()
 
 
     streamer = videoStream(args.model_path)
-    output = streamer.Run(args.video_path, args.prompt, args.max_new_tokens, args.max_clips)
+    output = streamer.Run(args.video_path, args.prompt, args.max_new_tokens, args.max_clips, args.min_new_tokens)
     print(output)
 
 if __name__ == "__main__":

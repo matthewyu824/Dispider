@@ -7,7 +7,7 @@ CHUNKS=${#GPULIST[@]}
 
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
-    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python  ./dispider/eval/model_videomme_long.py \
+    CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python  ./online_video_llm/eval/model_videomme_long.py \
         --model-path YOUR_MODEL_PATH \
         --image-folder YOUR_VIDEO_FOLDER_PATH \
         --chat_conversation_output_folder YOUR_OUTPUT_PATH/${CHUNKS}_${IDX}.json \
@@ -21,5 +21,5 @@ done
 
 wait
 
-python  ./dispider/eval/eval_videomme.py \
+python  ./online_video_llm/eval/eval_videomme.py \
         --results_file YOUR_OUTPUT_PATH

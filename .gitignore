@@ -1,6 +1,7 @@
-.venv/
-checkpoints/
-tmp/
+.venv
+checkpoints
+tmp
+*.system-disk-backup/
 
 __pycache__/
 *.py[cod]
